@@ -1,10 +1,15 @@
-import express, {Express, Request, Response} from 'express';
+import express, {Express, Request, Response, urlencoded} from 'express';
 import dB from './models/index'
 import 'dotenv/config'
 import router from './src/routes';
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+
+app.use(urlencoded({
+    extended: false
+}))
+app.use(express.json())
 
 // init database
 dB.sequelize.sync({alter: true})

@@ -2,7 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import getDBConfig from '../config/config';
-// import Sequelize from 'sequelize'
+// import {} from 'sequelize'
 
 // const fs = require('fs');
 // const path = require('path');
