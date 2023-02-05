@@ -36,6 +36,16 @@ const inviteGroupScheme = {
     id: Joi.any().required().label("Id"),
 }
 
+type alterInvitation = {
+    action: "join"|"decline";
+    id: string|number;
+}
+
+const alterInvitationScheme = {
+    action: Joi.string().required().label("Action"),
+    id: Joi.any().required().label("Id"),
+}
+
 export const createGroup = async (request: Request|any, response: Response)=>{
     const data: createGroup = request.body;
     
@@ -123,6 +133,7 @@ export const inviteGroup = async (request: Request|any, response: Response)=>{
     const usergroup = await db.usergroup.create({
         groupId: value.id,
         userId: user.id,
+        status: STATUS.PENDING
     })
 
     return WrapperResponse("success", {
@@ -138,10 +149,67 @@ export const myCreatedGroup = async (request: Request|any, response: Response)=>
             userId: request.user.id
         }
     });
-    
+
     return WrapperResponse("success", {
         message: "User invited Successfully",
         status: "success",
         payload: groups
     }, response)
+}
+
+export const viewInvitation = async (request: Request|any, response: Response)=>{
+    const usergroups = await db.usergroup.findAll({
+        where: {
+            userId: request.user.id,
+            status: STATUS.PENDING
+        },
+        include: [db.groups]
+    });
+
+    return WrapperResponse("success", {
+        message: "Invitation List Gotten Successfully",
+        status: "success",
+        payload: usergroups
+    }, response)
+}
+
+export const alterInvitation = async (request: Request|any, response: Response)=>{
+    const data: alterInvitation = request.body;
+    
+    // validate 
+    const {error, value} = Joi.object(alterInvitationScheme).validate(data)
+
+    if(error){
+        return WrapperResponse("error", {
+            message: error.message,
+            status: "failed"
+        }, response)
+    }
+
+    if(value.action == "join"){
+        const usergroup = await (db.usergroup).update({
+            status: STATUS.ACTIVE
+        },{
+            where: {
+                id: value.id
+            }
+        })
+
+        return WrapperResponse("success", {
+            message: "Invitation Accepted Successfully",
+            status: "success"
+        }, response)
+    }else{
+        // run delete function on id
+        await (db.usergroup).destory({
+            where: {
+                id: value.id
+            }
+        })
+
+        return WrapperResponse("success", {
+            message: "Invitation Declined Successfully",
+            status: "success",
+        }, response)
+    }
 }
